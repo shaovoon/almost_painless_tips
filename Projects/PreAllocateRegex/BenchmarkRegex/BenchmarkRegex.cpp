@@ -13,6 +13,7 @@
 #include <chrono>
 #include <regex> 
 #include <unordered_map>
+#include <map>
 #include <thread>
 #include <mutex>
 #include <memory> 
@@ -31,7 +32,7 @@ public:
 		auto end = std::chrono::high_resolution_clock::now();
 		auto dur = end - begin;
 		auto ms = std::chrono::duration_cast<std::chrono::milliseconds>(dur).count();
-		std::cout << std::setw(16) << text << ":" << std::setw(5) << ms << "ms" << std::endl;
+		std::cout << std::setw(35) << text << ":" << std::setw(5) << ms << "ms" << std::endl;
 	}
 
 private:
