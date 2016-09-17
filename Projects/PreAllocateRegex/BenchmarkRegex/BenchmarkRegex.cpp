@@ -69,6 +69,7 @@ public:
 		if (it == s_map.end())
 		{
 			std::unique_ptr<char[]> p = std::unique_ptr<char[]>(new char[1000]);
+			s_vec_temp_alloc.push_back(std::move(p));
 			s_map[thread_id] = std::unique_ptr<std::regex>(new std::regex(s_reg_exp));
 			return *s_map[thread_id];
 		}
@@ -78,10 +79,12 @@ private:
 	static MapType s_map;
 	static std::string s_reg_exp;
 	static std::mutex s_mutex;
+	static std::vector< std::unique_ptr<char[]> > s_vec_temp_alloc;
 };
 singleton::MapType singleton::s_map;
 std::string singleton::s_reg_exp;
 std::mutex singleton::s_mutex;
+std::vector< std::unique_ptr<char[]> > singleton::s_vec_temp_alloc;
 
 struct factory
 {
@@ -90,12 +93,15 @@ public:
 	{
 		std::lock_guard<std::mutex> lock(s_mutex);
 		std::unique_ptr<char[]> p = std::unique_ptr<char[]>(new char[1000]);
+		s_vec_temp_alloc.push_back( std::move(p) );
 		return std::unique_ptr<std::regex>(new std::regex(reg_exp));
 	}
 private:
 	static std::mutex s_mutex;
+	static std::vector< std::unique_ptr<char[]> > s_vec_temp_alloc;
 };
 std::mutex factory::s_mutex;
+std::vector< std::unique_ptr<char[]> > factory::s_vec_temp_alloc;
 
 const std::string local_match(const std::string& text);
 const std::string static_match(const std::string& text); // not reentrant-safe
@@ -112,11 +118,11 @@ void parallel_invoke(int size, int threads, std::function<void(int, int)> func)
 	{
 		if (i == threads - 1) // last thread
 		{
-			vec.emplace_back(PtrType(new std::thread(func, each*i, each*(i + 1) + (size % threads))));
+			vec.emplace_back(PtrType(new std::thread(func, each*i, each*(i + 1) + (size % threads) - 1)));
 		}
 		else
 		{
-			vec.emplace_back(PtrType(new std::thread(func, each*i, each*(i + 1) )));
+			vec.emplace_back(PtrType(new std::thread(func, each*i, each*(i + 1) - 1 )));
 		}
 	}
 
