@@ -20,6 +20,9 @@
 
 using namespace std;
 
+const int LOOP = 1000000;
+const int THREADS = 4;
+
 class timer
 {
 public: 
@@ -118,7 +121,7 @@ const string static_match(const string& text); // not reentrant-safe
 const string singleton_match(const string& text);
 const string factory_match(const string& text, const regex& regex);
 
-void parallel_invoke(int size, int threads, function<void(int, int)> func)
+void parallel_invoke(const int size, const int threads, function<void(int, int)> func)
 {
 	typedef unique_ptr<thread> PtrType;
 	vector< PtrType > vec;
@@ -146,7 +149,6 @@ const string REG_EXP = ".*PRICE:.*US\\$(\\d+\\.\\d+|[-+]*\\d+).*PER SHARE";
 
 int main(int argc, char* argv[])
 {
-	const int LOOP = 1000000;
 	string str1 = "Zoomer PRICE: US$1.23 PER SHARE";
 	string str2 = "Boomer PRICE: US$4.56 PER SHARE";
 	
@@ -187,8 +189,10 @@ int main(int argc, char* argv[])
 	}
 	stopwatch.stop_timing();
 
-	stopwatch.start_timing("local regex object(4 threads)");
-	parallel_invoke(LOOP, 4, [&vec](int start, int end) {
+	ostringstream os;
+	os << "local regex object(" << THREADS << " threads)";
+	stopwatch.start_timing(os.str());
+	parallel_invoke(LOOP, THREADS, [&vec](int start, int end) {
 		for (int j = start; j < end; ++j)
 		{
 			for (size_t i = 0; i < vec.size(); ++i)
@@ -199,8 +203,11 @@ int main(int argc, char* argv[])
 	});
 	stopwatch.stop_timing();
 
-	stopwatch.start_timing("singleton regex object(4 threads)");
-	parallel_invoke(LOOP, 4, [&vec] (int start, int end) {
+	os.clear();
+	os.str("");
+	os << "singleton regex object(" << THREADS << " threads)";
+	stopwatch.start_timing(os.str());
+	parallel_invoke(LOOP, THREADS, [&vec] (int start, int end) {
 		for (int j = start; j < end; ++j)
 		{
 			for (size_t i = 0; i < vec.size(); ++i)
@@ -211,8 +218,11 @@ int main(int argc, char* argv[])
 	});
 	stopwatch.stop_timing();
 
-	stopwatch.start_timing("factory regex object(4 threads)");
-	parallel_invoke(LOOP, 4, [&vec](int start, int end) {
+	os.clear();
+	os.str("");
+	os << "factory regex object(" << THREADS << " threads)";
+	stopwatch.start_timing(os.str());
+	parallel_invoke(LOOP, THREADS, [&vec](int start, int end) {
 		unique_ptr<regex> ptr = factory::get(REG_EXP);
 		const regex& regex = *ptr;
 
