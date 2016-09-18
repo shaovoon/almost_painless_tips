@@ -64,7 +64,7 @@ struct singleton
 {
 public:
 	typedef unordered_map<thread::id, unique_ptr<regex> > MapType;
-	static void set(const string& reg_exp) { s_reg_exp = reg_exp; }
+	static void init(const string& reg_exp) { s_reg_exp = reg_exp; }
 	static const regex& get()
 	{
 		lock_guard<mutex> lock(s_mutex);
@@ -178,7 +178,7 @@ int main(int argc, char* argv[])
 	}
 	stopwatch.stop_timing();
 
-	singleton::set(REG_EXP);
+	singleton::init(REG_EXP);
 	stopwatch.start_timing("singleton regex object");
 	for (int j = 0; j < LOOP; ++j)
 	{
@@ -241,7 +241,7 @@ int main(int argc, char* argv[])
 	cout << local_match(str2) << endl;
 	cout << static_match(str1) << endl;
 	cout << static_match(str2) << endl;
-	singleton::set(REG_EXP);
+	singleton::init(REG_EXP);
 	cout << singleton_match(str1) << endl;
 	cout << singleton_match(str2) << endl;
 	const regex regex(REG_EXP);
@@ -254,47 +254,47 @@ int main(int argc, char* argv[])
 
 const string local_match(const string& text)
 {
-	string ipo_price = "";
+	string price = "";
 	smatch what;
 	const regex regex(REG_EXP);
 	if (regex_match(text, what, regex))
 	{
-		ipo_price = what[1];
+		price = what[1];
 	}
-	return ipo_price;
+	return price;
 }
 
 const string static_match(const string& text) // not reentrant-safe
 {
-	string ipo_price = "";
+	string price = "";
 	smatch what;
 	static const regex regex(REG_EXP);
 	if (regex_match(text, what, regex))
 	{
-		ipo_price = what[1];
+		price = what[1];
 	}
-	return ipo_price;
+	return price;
 }
 
 const string singleton_match(const string& text)
 {
-	string ipo_price = "";
+	string price = "";
 	smatch what;
 	const regex& regex = singleton::get();
 	if (regex_match(text, what, regex))
 	{
-		ipo_price = what[1];
+		price = what[1];
 	}
-	return ipo_price;
+	return price;
 }
 
 const string factory_match(const string& text, const regex& regex)
 {
-	string ipo_price = "";
+	string price = "";
 	smatch what;
 	if (regex_match(text, what, regex))
 	{
-		ipo_price = what[1];
+		price = what[1];
 	}
-	return ipo_price;
+	return price;
 }
