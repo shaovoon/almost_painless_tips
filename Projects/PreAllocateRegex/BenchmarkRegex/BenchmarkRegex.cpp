@@ -37,7 +37,7 @@ public:
 		auto end = chrono::high_resolution_clock::now();
 		auto dur = end - begin;
 		auto ms = chrono::duration_cast<chrono::milliseconds>(dur).count();
-		cout << setw(35) << text << ":" << setw(5) << ms << "ms" << endl;
+		cout << setw(38) << text << ":" << setw(5) << ms << "ms" << endl;
 	}
 
 private:
@@ -118,6 +118,7 @@ vector< unique_ptr<char[]> > factory::s_vec_temp_alloc;
 
 const string local_match(const string& text);
 const string static_match(const string& text); // not reentrant-safe
+const string thread_local_match(const string& text); // not reentrant-safe
 const string singleton_match(const string& text);
 const string factory_match(const string& text, const regex& regex);
 
@@ -146,9 +147,12 @@ void parallel_invoke(const int size, const int threads, function<void(int, int)>
 }
 
 const string REG_EXP = ".*PRICE:.*US\\$(\\d+\\.\\d+|[-+]*\\d+).*PER SHARE";
+#include <utility>
 
 int main(int argc, char* argv[])
 {
+	int a = 1, b = 2;
+	std::swap(a, b);
 	string str1 = "Zoomer PRICE: US$1.23 PER SHARE";
 	string str2 = "Boomer PRICE: US$4.56 PER SHARE";
 	
@@ -185,6 +189,17 @@ int main(int argc, char* argv[])
 		for (size_t i = 0; i < vec.size(); ++i)
 		{
 			do_not_optimize_away(singleton_match(vec[i]).c_str());
+		}
+	}
+	stopwatch.stop_timing();
+
+	singleton::init(REG_EXP);
+	stopwatch.start_timing("thread_local regex object");
+	for (int j = 0; j < LOOP; ++j)
+	{
+		for (size_t i = 0; i < vec.size(); ++i)
+		{
+			do_not_optimize_away(thread_local_match(vec[i]).c_str());
 		}
 	}
 	stopwatch.stop_timing();
@@ -235,7 +250,25 @@ int main(int argc, char* argv[])
 		}
 	});
 	stopwatch.stop_timing();
-	
+
+	os.clear();
+	os.str("");
+	os << "thread_local regex object(" << THREADS << " threads)";
+	stopwatch.start_timing(os.str());
+	parallel_invoke(LOOP, THREADS, [&vec](int start, int end) {
+		unique_ptr<regex> ptr = factory::get(REG_EXP);
+		const regex& regex = *ptr;
+
+		for (int j = start; j < end; ++j)
+		{
+			for (size_t i = 0; i < vec.size(); ++i)
+			{
+				do_not_optimize_away(thread_local_match(vec[i]).c_str());
+			}
+		}
+	});
+	stopwatch.stop_timing();
+
 	/*
 	cout << local_match(str1) << endl;
 	cout << local_match(str2) << endl;
@@ -247,6 +280,8 @@ int main(int argc, char* argv[])
 	const regex regex(REG_EXP);
 	cout << factory_match(str1, regex) << endl;
 	cout << factory_match(str2, regex) << endl;
+	cout << thread_local_match(str1) << endl;
+	cout << thread_local_match(str2) << endl;
 	*/
 
 	return 0;
@@ -269,6 +304,18 @@ const string static_match(const string& text) // not reentrant-safe
 	string price = "";
 	smatch what;
 	static const regex regex(REG_EXP);
+	if (regex_match(text, what, regex))
+	{
+		price = what[1];
+	}
+	return price;
+}
+
+const string thread_local_match(const string& text) // not reentrant-safe
+{
+	string price = "";
+	smatch what;
+	static thread_local const regex regex(REG_EXP);
 	if (regex_match(text, what, regex))
 	{
 		price = what[1];
