@@ -73,48 +73,32 @@ public:
 		MapType::iterator it = s_map.find(thread_id);
 		if (it == s_map.end())
 		{
-			prevent_false_sharing(1000);
 			s_map[thread_id] = unique_ptr<regex>(new regex(s_reg_exp));
 			return *s_map[thread_id];
 		}
 		return *(it->second);
 	}
 private:
-	static void prevent_false_sharing(size_t size)
-	{
-		unique_ptr<char[]> p = unique_ptr<char[]>(new char[size]);
-		s_vec_temp_alloc.push_back(move(p));
-	}
 	static MapType s_map;
 	static string s_reg_exp;
 	static mutex s_mutex;
-	static vector< unique_ptr<char[]> > s_vec_temp_alloc;
 };
 singleton::MapType singleton::s_map;
 string singleton::s_reg_exp;
 mutex singleton::s_mutex;
-vector< unique_ptr<char[]> > singleton::s_vec_temp_alloc;
 
 struct factory
 {
 public:
 	static unique_ptr<regex> get(const string& reg_exp)
 	{
-		lock_guard<mutex> lock(s_mutex);
-		prevent_false_sharing(1000);
+		lock_guard<mutex> lock(s_mutex); // not sure why having a lock yields better perf
 		return unique_ptr<regex>(new regex(reg_exp));
 	}
 private:
-	static void prevent_false_sharing(size_t size)
-	{
-		unique_ptr<char[]> p = unique_ptr<char[]>(new char[size]);
-		s_vec_temp_alloc.push_back(move(p));
-	}
 	static mutex s_mutex;
-	static vector< unique_ptr<char[]> > s_vec_temp_alloc;
 };
 mutex factory::s_mutex;
-vector< unique_ptr<char[]> > factory::s_vec_temp_alloc;
 
 const string local_match(const string& text);
 const string static_match(const string& text); // not reentrant-safe
@@ -315,7 +299,7 @@ const string thread_local_match(const string& text) // not reentrant-safe
 {
 	string price = "";
 	smatch what;
-	static thread_local const regex regex(REG_EXP);
+	thread_local const regex regex(REG_EXP);
 	if (regex_match(text, what, regex))
 	{
 		price = what[1];
