@@ -177,7 +177,6 @@ int main(int argc, char* argv[])
 	}
 	stopwatch.stop_timing();
 
-	singleton::init(REG_EXP);
 	stopwatch.start_timing("thread_local regex object");
 	for (int j = 0; j < LOOP; ++j)
 	{
@@ -240,9 +239,6 @@ int main(int argc, char* argv[])
 	os << "thread_local regex object(" << THREADS << " threads)";
 	stopwatch.start_timing(os.str());
 	parallel_invoke(LOOP, THREADS, [&vec](int start, int end) {
-		unique_ptr<regex> ptr = factory::get(REG_EXP);
-		const regex& regex = *ptr;
-
 		for (int j = start; j < end; ++j)
 		{
 			for (size_t i = 0; i < vec.size(); ++i)
