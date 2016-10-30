@@ -28,15 +28,15 @@ public:
 		auto end = chrono::high_resolution_clock::now();
 		auto dur = end - begin;
 		auto ms = chrono::duration_cast<chrono::milliseconds>(dur).count();
-		cout << setw(38) << text << ":" << setw(5) << ms << "ms" << endl;
+		cout << setw(18) << text << ":" << setw(5) << ms << "ms" << endl;
 	}
 
 private:
 	string text;
-	chrono::steady_clock::time_point begin;
+	chrono::high_resolution_clock::time_point begin;
 };
 
-struct KeyHasher
+struct NopHasher
 {
 	size_t operator()(const size_t& k) const
 	{
@@ -45,7 +45,7 @@ struct KeyHasher
 };
 
 typedef unordered_map<size_t, size_t> uint_map_type;
-typedef unordered_map<size_t, size_t, KeyHasher> kuint_map_type;
+typedef unordered_map<size_t, size_t, NopHasher> kuint_map_type;
 
 void init_vector(vector<size_t>& v, const size_t start_number)
 {
@@ -64,13 +64,13 @@ void test_hash_fn()
 {
 	uint_map_type uint_map;
 
-	uint_map_type::hasher uint_map_fn = uint_map.hash_function();
+	uint_map_type::hasher uint_hash_fn = uint_map.hash_function();
 
-	std::cout << "uint_map_fn(1234)  returns " << uint_map_fn(1234) << std::endl;
+	cout << "uint_hash_fn(1234) returns " << uint_hash_fn(1234) << endl;
 
-	KeyHasher kuint_map_fn;
+	NopHasher nop_hash_fn;
 
-	std::cout << "kuint_map_fn(1234) returns " << kuint_map_fn(1234) << std::endl;
+	cout << "nop_hash_fn(1234)  returns " << nop_hash_fn(1234) << endl;
 }
 
 void benchmark();
@@ -103,7 +103,7 @@ void benchmark()
 	}
 	stopwatch.stop_timing();
 
-	stopwatch.start_timing("custom hash:insertion");
+	stopwatch.start_timing("no hash:insertion");
 	for (size_t n : v)
 	{
 		auto res = kuint_map.insert(std::make_pair(n, n));
@@ -123,7 +123,7 @@ void benchmark()
 
 	val = 0;
 
-	stopwatch.start_timing("custom hash:lookup");
+	stopwatch.start_timing("no hash:lookup");
 	for (size_t n : v)
 	{
 		val = kuint_map[n] = n;
