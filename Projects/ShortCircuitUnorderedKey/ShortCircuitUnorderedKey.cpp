@@ -85,50 +85,55 @@ int main()
 
 void benchmark()
 {
-	constexpr size_t COUNT = 1000000;
+	constexpr size_t COUNT = 20000000;
 	constexpr size_t START = 128569;
 	vector<size_t> v(COUNT, 0);
 	init_vector(v, START);
 
-	uint_map_type uint_map;
-	kuint_map_type kuint_map;
 
 	timer stopwatch;
-
-	stopwatch.start_timing("std hash:insertion");
-	for (size_t n : v)
 	{
-		auto res = uint_map.insert(std::make_pair(n, n));
-		assert(res.second);
-	}
-	stopwatch.stop_timing();
+		uint_map_type uint_map;
+		stopwatch.start_timing("std hash:insertion");
+		for (size_t n : v)
+		{
+			auto res = uint_map.insert(std::make_pair(n, n));
+			assert(res.second);
+		}
+		stopwatch.stop_timing();
 
-	stopwatch.start_timing("no hash:insertion");
-	for (size_t n : v)
+		size_t val = 0;
+
+		stopwatch.start_timing("std hash:lookup");
+		for (size_t n : v)
+		{
+			val = uint_map[n];
+			assert(val == n);
+		}
+		stopwatch.stop_timing();
+	}
+
 	{
-		auto res = kuint_map.insert(std::make_pair(n, n));
-		assert(res.second);
+		kuint_map_type kuint_map;
+		stopwatch.start_timing("no hash:insertion");
+		for (size_t n : v)
+		{
+			auto res = kuint_map.insert(std::make_pair(n, n));
+			assert(res.second);
+		}
+		stopwatch.stop_timing();
+
+		size_t val = 0;
+
+		stopwatch.start_timing("no hash:lookup");
+		for (size_t n : v)
+		{
+			val = kuint_map[n] = n;
+			assert(val == n);
+		}
+		stopwatch.stop_timing();
 	}
-	stopwatch.stop_timing();
 
-	size_t val = 0;
 
-	stopwatch.start_timing("std hash:lookup");
-	for (size_t n : v)
-	{
-		 val = uint_map[n];
-		 assert(val==n);
-	}
-	stopwatch.stop_timing();
-
-	val = 0;
-
-	stopwatch.start_timing("no hash:lookup");
-	for (size_t n : v)
-	{
-		val = kuint_map[n] = n;
-		assert(val == n);
-	}
-	stopwatch.stop_timing();
 }
 
