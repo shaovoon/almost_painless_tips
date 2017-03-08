@@ -20,7 +20,7 @@
 
 using namespace std;
 
-const int LOOP = 1000000;
+const int LOOP = 10000;
 const int THREADS = 4;
 
 class timer
@@ -42,7 +42,7 @@ public:
 
 private:
 	string text;
-	chrono::steady_clock::time_point begin;
+	chrono::high_resolution_clock::time_point begin;
 };
 
 #ifdef WIN32
@@ -55,7 +55,7 @@ void do_not_optimize_away(T* datum) {
 #pragma optimize("", on)
 
 #else
-static void do_not_optimize_away(void* p) { 
+static void do_not_optimize_away(const void* p) { 
 	asm volatile("" : : "g"(p) : "memory");
 }
 #endif
