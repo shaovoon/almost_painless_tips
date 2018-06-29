@@ -27,12 +27,12 @@ class timer
 {
 public: 
 	timer() = default;
-	void start_timing(const string& text_)
+	void start(const string& text_)
 	{
 		text = text_;
 		begin = chrono::high_resolution_clock::now();
 	}
-	void stop_timing()
+	void stop()
 	{
 		auto end = chrono::high_resolution_clock::now();
 		auto dur = end - begin;
@@ -146,7 +146,7 @@ int main(int argc, char* argv[])
 	
 	timer stopwatch;
 
-	stopwatch.start_timing("local regex object");
+	stopwatch.start("local regex object");
 	for(int j = 0; j < LOOP; ++j)
 	{
 		for(size_t i = 0; i < vec.size(); ++i)
@@ -154,9 +154,9 @@ int main(int argc, char* argv[])
 			do_not_optimize_away(local_match(vec[i]).c_str());
 		}
 	}
-	stopwatch.stop_timing();
+	stopwatch.stop();
 
-	stopwatch.start_timing("static regex object");
+	stopwatch.start("static regex object");
 	for(int j = 0; j < LOOP; ++j)
 	{
 		for(size_t i = 0; i < vec.size(); ++i)
@@ -164,10 +164,10 @@ int main(int argc, char* argv[])
 			do_not_optimize_away(static_match(vec[i]).c_str());
 		}
 	}
-	stopwatch.stop_timing();
+	stopwatch.stop();
 
 	singleton::init(REG_EXP);
-	stopwatch.start_timing("singleton regex object");
+	stopwatch.start("singleton regex object");
 	for (int j = 0; j < LOOP; ++j)
 	{
 		for (size_t i = 0; i < vec.size(); ++i)
@@ -175,9 +175,9 @@ int main(int argc, char* argv[])
 			do_not_optimize_away(singleton_match(vec[i]).c_str());
 		}
 	}
-	stopwatch.stop_timing();
+	stopwatch.stop();
 
-	stopwatch.start_timing("thread_local regex object");
+	stopwatch.start("thread_local regex object");
 	for (int j = 0; j < LOOP; ++j)
 	{
 		for (size_t i = 0; i < vec.size(); ++i)
@@ -185,11 +185,11 @@ int main(int argc, char* argv[])
 			do_not_optimize_away(thread_local_match(vec[i]).c_str());
 		}
 	}
-	stopwatch.stop_timing();
+	stopwatch.stop();
 
 	ostringstream os;
 	os << "local regex object(" << THREADS << " threads)";
-	stopwatch.start_timing(os.str());
+	stopwatch.start(os.str());
 	parallel_invoke(LOOP, THREADS, [&vec](int start, int end) {
 		for (int j = start; j < end; ++j)
 		{
@@ -199,12 +199,12 @@ int main(int argc, char* argv[])
 			}
 		}
 	});
-	stopwatch.stop_timing();
+	stopwatch.stop();
 
 	os.clear();
 	os.str("");
 	os << "singleton regex object(" << THREADS << " threads)";
-	stopwatch.start_timing(os.str());
+	stopwatch.start(os.str());
 	parallel_invoke(LOOP, THREADS, [&vec] (int start, int end) {
 		for (int j = start; j < end; ++j)
 		{
@@ -214,12 +214,12 @@ int main(int argc, char* argv[])
 			}
 		}
 	});
-	stopwatch.stop_timing();
+	stopwatch.stop();
 
 	os.clear();
 	os.str("");
 	os << "factory regex object(" << THREADS << " threads)";
-	stopwatch.start_timing(os.str());
+	stopwatch.start(os.str());
 	parallel_invoke(LOOP, THREADS, [&vec](int start, int end) {
 		unique_ptr<regex> ptr = factory::get(REG_EXP);
 		const regex& regex = *ptr;
@@ -232,12 +232,12 @@ int main(int argc, char* argv[])
 			}
 		}
 	});
-	stopwatch.stop_timing();
+	stopwatch.stop();
 
 	os.clear();
 	os.str("");
 	os << "thread_local regex object(" << THREADS << " threads)";
-	stopwatch.start_timing(os.str());
+	stopwatch.start(os.str());
 	parallel_invoke(LOOP, THREADS, [&vec](int start, int end) {
 		for (int j = start; j < end; ++j)
 		{
@@ -247,7 +247,7 @@ int main(int argc, char* argv[])
 			}
 		}
 	});
-	stopwatch.stop_timing();
+	stopwatch.stop();
 
 	/*
 	cout << local_match(str1) << endl;

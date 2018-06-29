@@ -14,12 +14,12 @@ class timer
 {
 public:
 	timer() = default;
-	void start_timing(const std::string& text_)
+	void start(const std::string& text_)
 	{
 		text = text_;
 		begin = std::chrono::high_resolution_clock::now();
 	}
-	void stop_timing()
+	void stop()
 	{
 		auto end = std::chrono::high_resolution_clock::now();
 		auto dur = end - begin;
@@ -29,7 +29,7 @@ public:
 
 private:
 	std::string text;
-	std::chrono::steady_clock::time_point begin;
+	std::chrono::high_resolution_clock::time_point begin;
 };
 
 Gdiplus::GdiplusStartupInput m_gdiplusStartupInput;
@@ -44,13 +44,13 @@ int main()
 
 	Gdiplus::GdiplusStartup(&m_gdiplusToken, &m_gdiplusStartupInput, NULL);
 
-	stopwatch.start_timing("write_bitmap_cache_friendly");
+	stopwatch.start("write_bitmap_cache_friendly");
 	write_bitmap_cache_friendly();
-	stopwatch.stop_timing();
+	stopwatch.stop();
 
-	stopwatch.start_timing("write_bitmap_cache_unfriendly");
+	stopwatch.start("write_bitmap_cache_unfriendly");
 	write_bitmap_cache_unfriendly();
-	stopwatch.stop_timing();
+	stopwatch.stop();
 
 	Gdiplus::GdiplusShutdown(m_gdiplusToken);
 
